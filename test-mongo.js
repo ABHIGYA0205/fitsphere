@@ -1,9 +1,12 @@
 const mongoose = require('mongoose');
 
-const uri = "mongodb+srv://abhigyasachdeva1234_db_user:zqT8xkhLHE3IdFiw@fitsphere.zccoveg.mongodb.net/fitsphere?retryWrites=true&w=majority&appName=fitsphere";
+const uri = process.env.MONGODB_URI;
 
 async function test() {
   try {
+    if (!uri) {
+      throw new Error("MONGODB_URI environment variable is not set.");
+    }
     console.log("Attempting to connect to MongoDB...");
     await mongoose.connect(uri);
     console.log("✅ SUCCESS! Connected to MongoDB perfectly.");
