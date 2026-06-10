@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../auth/[...nextauth]/route';
-import { prisma } from '@/lib/prisma';
+import connectToDatabase from '@/lib/mongodb';
+import Favorite from '@/models/Favorite';
 
 export const dynamic = 'force-dynamic';
 
@@ -10,11 +11,23 @@ export async function GET(request) {
   if (!session) return new NextResponse('Unauthorized', { status: 401 });
 
   try {
-    const favorites = await prisma.favorite.findMany({
-      where: { userId: session.user.id },
-    });
+    await connectToDatabase();
+    
+    // session.user.id or email
+    let userId = session.user?.id;
+    if (!userId) {
+      // fallback if id wasn't mapped in token
+      const User = require('@/models/User').default;
+      const user = await User.findOne({ email: session.user.email });
+      userId = user?._id;
+    }
+
+    if (!userId) return new NextResponse('Unauthorized', { status: 401 });
+
+    const favorites = await Favorite.find({ userId });
     return NextResponse.json(favorites.map(f => f.videoId));
   } catch (error) {
+    console.error('Error fetching favorites:', error);
     return new NextResponse('Internal Error', { status: 500 });
   }
 }
@@ -25,31 +38,30 @@ export async function POST(request) {
 
   try {
     const { videoId } = await request.json();
+    if (!videoId) return new NextResponse('Video ID missing', { status: 400 });
 
-    const existing = await prisma.favorite.findUnique({
-      where: {
-        userId_videoId: {
-          userId: session.user.id,
-          videoId,
-        },
-      },
-    });
+    await connectToDatabase();
+
+    let userId = session.user?.id;
+    if (!userId) {
+      const User = require('@/models/User').default;
+      const user = await User.findOne({ email: session.user.email });
+      userId = user?._id;
+    }
+
+    if (!userId) return new NextResponse('Unauthorized', { status: 401 });
+
+    const existing = await Favorite.findOne({ userId, videoId });
 
     if (existing) {
-      await prisma.favorite.delete({
-        where: { id: existing.id },
-      });
+      await Favorite.deleteOne({ _id: existing._id });
       return NextResponse.json({ added: false });
     } else {
-      await prisma.favorite.create({
-        data: {
-          userId: session.user.id,
-          videoId,
-        },
-      });
+      await Favorite.create({ userId, videoId });
       return NextResponse.json({ added: true });
     }
   } catch (error) {
+    console.error('Error toggling favorite:', error);
     return new NextResponse('Internal Error', { status: 500 });
   }
 }
