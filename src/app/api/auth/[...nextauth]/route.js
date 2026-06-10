@@ -1,6 +1,7 @@
 import NextAuth from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
-import { prisma } from '@/lib/prisma';
+import connectToDatabase from '@/lib/mongodb';
+import User from '@/models/User';
 import bcrypt from 'bcryptjs';
 
 export const dynamic = 'force-dynamic';
@@ -8,7 +9,7 @@ export const dynamic = 'force-dynamic';
 export const authOptions = {
   providers: [
     CredentialsProvider({
-      name: 'Credentials',
+      name: 'credentials',
       credentials: {
         email: { label: 'Email', type: 'text' },
         password: { label: 'Password', type: 'password' },
@@ -18,9 +19,8 @@ export const authOptions = {
           throw new Error('Invalid credentials');
         }
 
-        const user = await prisma.user.findUnique({
-          where: { email: credentials.email },
-        });
+        await connectToDatabase();
+        const user = await User.findOne({ email: credentials.email });
 
         if (!user || !user?.password) {
           throw new Error('Invalid credentials');
@@ -35,13 +35,10 @@ export const authOptions = {
           throw new Error('Invalid credentials');
         }
 
-        return user;
+        return { id: user._id.toString(), name: user.name, email: user.email };
       },
     }),
   ],
-  pages: {
-    signIn: '/auth/login',
-  },
   session: {
     strategy: 'jwt',
   },
@@ -53,7 +50,7 @@ export const authOptions = {
       return token;
     },
     async session({ session, token }) {
-      if (session.user) {
+      if (session?.user) {
         session.user.id = token.id;
       }
       return session;

@@ -1,22 +1,20 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import connectToDatabase from '@/lib/mongodb';
+import User from '@/models/User';
 import bcrypt from 'bcryptjs';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(request) {
   try {
+    await connectToDatabase();
     const { name, email, password } = await request.json();
 
     if (!email || !password) {
       return new NextResponse('Missing info', { status: 400 });
     }
 
-    const exist = await prisma.user.findUnique({
-      where: {
-        email: email,
-      },
-    });
+    const exist = await User.findOne({ email });
 
     if (exist) {
       return new NextResponse('User already exists', { status: 400 });
@@ -24,17 +22,15 @@ export async function POST(request) {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const user = await prisma.user.create({
-      data: {
-        name,
-        email,
-        password: hashedPassword,
-      },
+    const user = await User.create({
+      name,
+      email,
+      password: hashedPassword,
     });
 
-    return NextResponse.json(user);
+    return NextResponse.json({ id: user._id, email: user.email, name: user.name });
   } catch (error) {
-    console.log(error);
+    console.error('Signup error:', error);
     return new NextResponse('Internal Error', { status: 500 });
   }
 }
