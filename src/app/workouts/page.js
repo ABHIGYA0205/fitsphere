@@ -3,8 +3,7 @@ import { useEffect, useState } from 'react';
 import './Workout.css';
 import Aos from 'aos';
 import 'aos/dist/aos.css';
-import { useAuthState } from 'react-firebase-hooks/auth';
-import { auth } from '@/app/firebase/config';
+import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image'; 
 
@@ -15,7 +14,7 @@ export default function WorkoutsPage() {
   const [bodyParts, setBodyParts] = useState([]);
   const [selectedPart, setSelectedPart] = useState('all');
 
-  const [user, loading] = useAuthState(auth);
+  const { data: session, status } = useSession();
   const router = useRouter();
   const [ready, setReady] = useState(false);
 
@@ -24,14 +23,13 @@ export default function WorkoutsPage() {
   }, []);
 
   useEffect(() => {
-    if (!loading) {
-      if (!user) {
-        router.push('/auth/login');
-      } else {
-        setReady(true);
-      }
+    if (status === 'loading') return;
+    if (!session) {
+      router.push('/auth/login');
+    } else {
+      setReady(true);
     }
-  }, [user, loading, router]);
+  }, [session, status, router]);
 
   useEffect(() => {
     if (!ready) return;
@@ -68,7 +66,7 @@ export default function WorkoutsPage() {
     }
   }, [selectedPart, workouts]);
 
-  if (loading || !ready) return <p style={{ textAlign: 'center' }}>Loading...</p>;
+  if (!ready || status === 'loading') return <p style={{ textAlign: 'center' }}>Loading...</p>;
 
   return (
     <div className="workouts-container">
@@ -94,11 +92,9 @@ export default function WorkoutsPage() {
   {
   filteredWorkouts.map((w, i) => (
     <div key={i} className="workout-card" data-aos="fade-up">
-      <Image
+      <img
         src={w.gifUrl || "/default-workout.png"}  
         alt={w.name || "Workout image"}
-        width={400}
-        height={400}
         className="workout-image"
       />
       <h3>{w.name}</h3>

@@ -1,75 +1,82 @@
 "use client"
 import Link from 'next/link';
-import Aos from 'aos';
-import "aos/dist/aos.css"
-import { useState, useEffect } from 'react';
-import { useSignInWithEmailAndPassword } from 'react-firebase-hooks/auth'
-import { auth } from '@/app/firebase/config';
-import './login.css'
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import '../Auth.css';
 
-const Login = () => {
-  useEffect(() => {
-    Aos.init({ duration: 600 });
-  }, []);
-
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [signInWithEmailAndPassword] = useSignInWithEmailAndPassword(auth);
+export default function LoginPage() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
 
   const handleLogin = async (e) => {
     e.preventDefault();
+    setLoading(true);
+    setError('');
+
     try {
-      const res = await signInWithEmailAndPassword(email, password);
-      
-      if (res && res.user) {
-        console.log('Logged in user:', res.user);
-        sessionStorage.setItem('user', true);
-        setEmail('');
-        setPassword('');
-        router.push('/');
+      const { signIn } = await import('next-auth/react');
+      const res = await signIn('credentials', {
+        redirect: false,
+        email,
+        password,
+      });
+
+      if (res?.error) {
+        setError('Invalid credentials. Please try again.');
+        setLoading(false);
       } else {
-        alert('Invalid email or password.');
+        router.push('/');
       }
-    } catch (e) {
-      console.error('Login error:', e);
-      alert('Login failed. Please check your credentials.');
+    } catch (err) {
+      setError('An error occurred. Please try again.');
+      setLoading(false);
     }
   };
+
   return (
-    <div className='authContainer'
-    data-aos="fade-in"
-     data-aos-easing="linear"
-     data-aos-duration="500"
-     >
-      <div className='authForm'>
-        <h2>Login</h2>
-        <form onSubmit={handleLogin}>
-          <div className='formGroup'>
-            <label htmlFor="email">Email</label>
-            <input 
-             type="email"
-             placeholder="Email"
-             value={email}
-             onChange={(e) => setEmail(e.target.value)}
-             required />
+    <div className="auth-container">
+      <div className="auth-card fade-in-up">
+        <h1 className="auth-title">Welcome Back</h1>
+        <p className="auth-subtitle">Log in to continue your fitness journey</p>
+        
+        {error && <div className="auth-error">{error}</div>}
+
+        <form onSubmit={handleLogin} className="auth-form">
+          <div className="input-group">
+            <label>Email Address</label>
+            <input
+              type="email"
+              className="auth-input"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              placeholder="you@example.com"
+            />
           </div>
-          <div className='formGroup'>
-            <label htmlFor="password">Password</label>
-            <input 
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-             required />
+          <div className="input-group">
+            <label>Password</label>
+            <input
+              type="password"
+              className="auth-input"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              placeholder="••••••••"
+            />
           </div>
-          <button type="submit" className='authButton'>Login</button>
+          <button type="submit" className="auth-button" disabled={loading}>
+            {loading ? 'Logging in...' : 'Log In'}
+          </button>
         </form>
-        <p>Don&apos;t have an account? <Link href="./signup">Sign up</Link></p>
+
+        <div className="auth-switch">
+          Don't have an account? 
+          <Link href="/auth/signup" className="auth-link">Sign Up</Link>
+        </div>
       </div>
     </div>
-  );         
-};
-
-export default Login;
+  );
+}

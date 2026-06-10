@@ -3,28 +3,28 @@ import "./about.css";
 import Aos from "aos";
 import "aos/dist/aos.css";
 import { useEffect, useState } from "react";
-import { useAuthState } from "react-firebase-hooks/auth";
-import { auth } from "@/app/firebase/config";
-import { useRouter } from "next/navigation";
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 
 export default function AboutPage() {
-  const [user, loading] = useAuthState(auth);
+  const { data: session, status } = useSession();
   const router = useRouter();
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
     Aos.init({ duration: 600 });
+  }, []);
 
-    if (!loading) {
-      if (!user) {
-        router.push("/auth/login");
-      } else {
-        setReady(true);
-      }
+  useEffect(() => {
+    if (status === 'loading') return;
+    if (!session) {
+      router.push('/auth/login');
+    } else {
+      setReady(true);
     }
-  }, [user, loading, router]);
+  }, [session, status, router]);
 
-  if (loading || !ready) return null;
+  if (!ready || status === 'loading') return null;
 
   return (
     <div className="about-container" data-aos="zoom-out">

@@ -1,65 +1,83 @@
 .workouts-container {
-  padding: 2rem;
-  font-family: monospace;
+  padding: 8rem 2rem 2rem;
+  font-family: inherit;
   text-align: center;
   max-width: 1200px;
   margin: auto;
+  color: var(--text-main);
 }
 
-h1 {
-  font-size: 2.5rem;
+.workouts-container h1 {
+  font-size: 3rem;
+  font-weight: 800;
   margin-bottom: 1.5rem;
+  background: linear-gradient(135deg, #a78bfa, #fcd34d);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .filter-section {
-  margin-bottom: 2rem;
+  margin-bottom: 3rem;
 }
 
 .filter-section label {
-  margin-right: 0.5rem;
-  font-weight: bold;
+  margin-right: 1rem;
+  font-weight: 600;
   font-size: 1.1rem;
+  color: var(--text-muted);
 }
 
 .filter-section select {
-  padding: 0.5rem;
+  padding: 0.6rem 1rem;
   font-size: 1rem;
-  border-radius: 6px;
-  border: 1px solid #ccc;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.05);
+  color: #fff;
+  outline: none;
+  cursor: pointer;
 }
 
 .workout-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 24px;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 2rem;
 }
 
 .workout-card {
-  background: #fff;
-  padding: 1rem;
-  border-radius: 10px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  transition: transform 0.2s ease;
+  background: var(--bg-card);
+  padding: 1.5rem;
+  border-radius: 16px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease, border-color 0.2s ease;
+  border: 1px solid var(--border);
+  text-align: left;
 }
 
 .workout-card:hover {
   transform: translateY(-5px);
+  border-color: var(--primary);
 }
 
 .workout-image {
   width: 100%;
   height: auto;
   border-radius: 8px;
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .workout-card h3 {
-  font-size: 1.2rem;
-  margin-bottom: 0.5rem;
+  font-size: 1.3rem;
+  font-weight: 700;
+  margin-bottom: 0.8rem;
+  color: #fff;
+  text-transform: capitalize;
 }
 
 .workout-card p {
   font-size: 0.95rem;
-  margin: 0.2rem 0;
-  color: #555;
+  margin: 0.4rem 0;
+  color: var(--text-muted);
+  text-transform: capitalize;
 }

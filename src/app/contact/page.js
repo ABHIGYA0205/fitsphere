@@ -3,29 +3,32 @@ import './contact.css';
 import Aos from 'aos';
 import 'aos/dist/aos.css';
 import { useEffect, useState } from 'react';
-import { useAuthState } from 'react-firebase-hooks/auth';
-import { auth } from '@/app/firebase/config';
+import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Swal from "sweetalert2"
 
 export default function ContactPage() {
-  const [user, loading] = useAuthState(auth);
+  const { data: session, status } = useSession();
   const router = useRouter();
   const [ready, setReady] = useState(false);
+  const [formData, setFormData] = useState({ name: '', email: '', message: '' });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [successMsg, setSuccessMsg] = useState('');
 
   useEffect(() => {
     Aos.init({ duration: 600 });
+  }, []);
 
-    if (!loading) {
-      if (!user) {
-        router.push('/auth/login');
-      } else {
-        setReady(true);
-      }
+  useEffect(() => {
+    if (status === 'loading') return;
+    if (!session) {
+      router.push('/auth/login');
+    } else {
+      setReady(true);
     }
-  }, [user, loading, router]);
+  }, [session, status, router]);
 
-  if (loading || !ready) return null;
+  if (!ready || status === 'loading') return null;
 
   async function handleSubmit(event) {
     event.preventDefault();

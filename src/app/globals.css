@@ -1,12 +1,33 @@
 @import "tailwindcss";
 
+:root {
+  --primary: #4b4dff;
+  --bg-dark: #0b0b1a;
+  --bg-card: rgba(255, 255, 255, 0.03);
+  --text-main: #ffffff;
+  --text-muted: #a0a4c0;
+  --accent: #b055ff;
+  --border: rgba(255, 255, 255, 0.1);
+}
+
+body {
+  background-color: var(--bg-dark);
+  color: var(--text-main);
+  background-image: 
+    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 50px 50px;
+  background-position: center center;
+}
 
 html, body {
   height: 100%;
   margin: 0;
   padding: 0;
+  background-color: var(--bg-dark);
+  color: var(--text-main);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
 }
-
 
 .app-container {
   display: flex;
@@ -16,4 +37,13 @@ html, body {
 
 .main-content {
   flex: 1;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+* {
+  box-sizing: border-box;
 }

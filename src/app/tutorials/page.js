@@ -3,16 +3,8 @@ import { useEffect, useState } from 'react';
 import './tutorial.css';
 import Aos from 'aos';
 import 'aos/dist/aos.css';
-import { useAuthState } from 'react-firebase-hooks/auth';
-import { auth, db } from '@/app/firebase/config';
+import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import {
-  doc,
-  setDoc,
-  deleteDoc,
-  getDocs,
-  collection,
-} from 'firebase/firestore';
 
 const DIFFICULTY_MAP = {
   All: 'fitness tutorial',
@@ -29,7 +21,7 @@ export default function TutorialsPage() {
   const [difficultyFilter, setDifficultyFilter] = useState('All');
   const [isLoadingVideos, setIsLoadingVideos] = useState(false);
 
-  const [user, loading] = useAuthState(auth);
+  const { data: session, status } = useSession();
   const router = useRouter();
   const [ready, setReady] = useState(false);
 
@@ -38,14 +30,13 @@ export default function TutorialsPage() {
   }, []);
 
   useEffect(() => {
-    if (!loading) {
-      if (!user) {
-        router.push('/auth/login');
-      } else {
-        setReady(true);
-      }
+    if (status === 'loading') return;
+    if (!session) {
+      router.push('/auth/login');
+    } else {
+      setReady(true);
     }
-  }, [user, loading, router]);
+  }, [session, status, router]);
 
   useEffect(() => {
     if (!ready) return;
@@ -72,32 +63,37 @@ export default function TutorialsPage() {
 
   const fetchFavorites = async () => {
     try {
-      const favRef = collection(db, 'users', user.uid, 'favorites');
-      const snapshot = await getDocs(favRef);
-      const favIds = snapshot.docs.map((doc) => doc.id);
-      setFavorites(favIds);
+      const res = await fetch('/api/favorites');
+      if (res.ok) {
+        const favIds = await res.json();
+        setFavorites(favIds);
+      }
     } catch (err) {
       console.error('Failed to fetch favorites:', err);
     }
   };
 
   const toggleFavorite = async (videoId) => {
-    const docRef = doc(db, 'users', user.uid, 'favorites', videoId);
-
     try {
-      if (favorites.includes(videoId)) {
-        await deleteDoc(docRef);
-        setFavorites((prev) => prev.filter((id) => id !== videoId));
-      } else {
-        await setDoc(docRef, { addedAt: new Date() });
-        setFavorites((prev) => [...prev, videoId]);
+      const res = await fetch('/api/favorites', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ videoId })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.added) {
+          setFavorites((prev) => [...prev, videoId]);
+        } else {
+          setFavorites((prev) => prev.filter((id) => id !== videoId));
+        }
       }
     } catch (err) {
       console.error('Error toggling favorite:', err);
     }
   };
 
-  if (loading || !ready) return <p>Loading...</p>;
+  if (!ready || status === 'loading') return <p>Loading...</p>;
 
   return (
     <div className="tutorial-page" data-aos="fade-up">

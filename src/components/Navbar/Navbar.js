@@ -1,60 +1,44 @@
 'use client';
 import Link from 'next/link';
 import './Navbar.css';
-import { auth } from '@/app/firebase/config';
-import { signOut } from 'firebase/auth';
-import { useAuthState } from 'react-firebase-hooks/auth';
-import Image from 'next/image'; 
+import { useSession, signOut } from 'next-auth/react';
+import Image from 'next/image';
 
 export default function Navbar() {
-  const [user, loading] = useAuthState(auth);
+  const { data: session, status } = useSession();
+  const user = session?.user;
 
   return (
-    <nav className="navbar">
-      <Link href="/">
-        <div className="navbar-logo">
-          <Image
-            src="/logo.png"
-            alt="FitSphere Logo"
-            width={140}
-            height={40}
-            priority
-          />
-        </div>
+    <nav className="navbar fade-in-down">
+      <Link href="/" className="navbar-logo">
+        <span className="logo-icon">M</span>
+        <span className="logo-text">FitSphere</span>
       </Link>
 
       <ul className="navbar-links">
-        {user && (
-          <>
-            <li><Link href="/" className="nav-link">Home</Link></li>
-            <li><Link href="/workouts" className="nav-link">Workouts</Link></li>
-            <li><Link href="/tutorials" className="nav-link">Tutorials</Link></li>
-            <li><Link href="/favorites" className="nav-link">Favorites</Link></li>
-            <li><Link href="/about" className="nav-link">About</Link></li>
-            <li><Link href="/contact" className="nav-link">Contact</Link></li>
-          </>
-        )}
+        <li><Link href="/workouts" className="nav-link">Workouts <span className="chevron"></span></Link></li>
+        <li><Link href="/tutorials" className="nav-link">Tutorials <span className="chevron"></span></Link></li>
+        <li><Link href="/favorites" className="nav-link">Favorites <span className="chevron"></span></Link></li>
+        {user && <li><Link href="/dashboard" className="nav-link">Dashboard</Link></li>}
       </ul>
 
-      <ul className="navbar-links">
-        {!user && (
+      <div className="navbar-actions">
+        {!user && status !== 'loading' && (
           <>
-            <li><Link href="/auth/login" className="nav-link auth">Login</Link></li>
-            <li><Link href="/auth/signup" className="nav-link auth">Signup</Link></li>
+            <Link href="/auth/login" className="login-link">Login</Link>
+            <Link href="/auth/signup" className="btn-primary">Start Free Trial</Link>
           </>
         )}
         {user && (
-          <li>
-            <button
-              onClick={() => signOut(auth)}
-              className="auth"
-              aria-label="Log out"
-            >
-              Log Out
-            </button>
-          </li>
+          <button
+            onClick={() => signOut({ callbackUrl: '/' })}
+            className="btn-primary"
+            aria-label="Log out"
+          >
+            Log Out
+          </button>
         )}
-      </ul>
+      </div>
     </nav>
   );
 }
